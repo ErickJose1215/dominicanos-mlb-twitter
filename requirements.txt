@@ -1,0 +1,5 @@
+mlbstatsapi
+matplotlib
+pandas
+tweepy
+python-dotenv
