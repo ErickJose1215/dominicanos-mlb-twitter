@@ -25,6 +25,9 @@ jobs:
         run: |
           python -c "import fetch_stats, create_image; df = fetch_stats.obtener_actuaciones(); img = create_image.generar_tabla(df); print('Image generated:', img)"
 
+      - name: List files in workspace
+        run: ls -l
+
       - name: Upload image as artifact
         uses: actions/upload-artifact@v3
         with:
