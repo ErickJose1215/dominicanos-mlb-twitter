@@ -1,56 +1,70 @@
-import requests
+from pybaseball import statcast
 import pandas as pd
 from datetime import datetime, timedelta
 
-BASE_URL = "https://statsapi.mlb.com/api/v1"
-
-def get_yesterdays_games():
-    yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-    url = f"{BASE_URL}/schedule/games/?sportId=1&startDate={yesterday}&endDate={yesterday}"
-    res = requests.get(url)
-    res.raise_for_status()
-    data = res.json()
-    game_ids = [game['gamePk'] for date in data['dates'] for game in date['games']]
-    return game_ids
-
-def get_boxscore(game_id):
-    url = f"{BASE_URL}/game/{game_id}/boxscore"
-    res = requests.get(url)
-    res.raise_for_status()
-    return res.json()
+# Lista fija de jugadores dominicanos (puedes extenderla)
+DOMINICAN_PLAYERS = [
+    "Rafael Devers", "Carlos Santana", "José Ramírez", "Willy Adames",
+    "Víctor Robles", "Julio Rodríguez", "Jorge Polanco", "Miguel Andújar",
+    "Christopher Morel", "Junior Caminero", "Leody Taveras", "Manny Machado",
+    "Fernando Tatis Jr.", "Santiago Espinal", "Elly De La Cruz", "Jeimer Candelario",
+    "Jeremy Peña", "Yainer Díaz", "Willi Castro", "Ramón Laureano", "Gary Sánchez",
+    "Jorge Mateo", "Vladimir Guerrero Jr.", "Juan Soto", "Mark Vientos",
+    "José Siri", "Starling Marte", "Jasson Domínguez", "Austin Wells",
+    "Enmanuel Valdez", "Oneil Cruz", "Teoscar Hernández", "Geraldo Perdomo",
+    "Luis Garcia Jr."
+]
 
 def get_performances():
-    games = get_yesterdays_games()
-    players_data = []
+    yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    data = statcast(start_dt=yesterday, end_dt=yesterday)
 
-    for game_id in games:
-        box = get_boxscore(game_id)
+    if data.empty:
+        return pd.DataFrame()
 
-        for team in ['home', 'away']:
-            if team not in box or 'players' not in box[team]:
-                continue
+    # Filtrar solo apariciones de bateo
+    batting_data = data[data['description'].notnull()]
+    
+    # Agrupar por jugador
+    summary = (
+        batting_data.groupby("player_name")
+        .agg({
+            "events": lambda x: list(x),
+            "description": "count"
+        })
+        .reset_index()
+    )
 
-            players = box[team]['players']
-            for player_id, player_info in players.items():
-                stats = player_info.get('stats', {}).get('batting', {})
-                if not stats:
-                    continue
+    players = []
 
-                name = player_info['person']['fullName']
-                print(f"🧾 Found player: {name}")  # Mostrar todos los nombres
+    for _, row in summary.iterrows():
+        name = row["player_name"]
+        if name not in DOMINICAN_PLAYERS:
+            continue
 
-                players_data.append({
-                    "Player": name,
-                    "AB": stats.get('atBats', 0),
-                    "H": stats.get('hits', 0),
-                    "2B": stats.get('doubles', 0),
-                    "3B": stats.get('triples', 0),
-                    "HR": stats.get('homeRuns', 0),
-                    "R": stats.get('runs', 0),
-                    "RBI": stats.get('rbi', 0),
-                    "BB": stats.get('baseOnBalls', 0),
-                    "SO": stats.get('strikeOuts', 0),
-                    "SB": stats.get('stolenBases', 0)
-                })
+        events = row["events"]
+        ab = len(events)
+        h = sum(1 for e in events if e in ["single", "double", "triple", "home_run"])
+        hr = events.count("home_run")
+        bb = events.count("walk") + events.count("intent_walk") + events.count("hit_by_pitch")
+        so = events.count("strikeout")
+        rbi = 0  # No incluido directamente en Statcast
+        sb = 0   # Tampoco directamente, puedes integrar otra fuente si quieres
+        r = 0    # No disponible en este nivel
 
-    return pd.DataFrame(players_data)
+        players.append({
+            "Player": name,
+            "AB": ab,
+            "H": h,
+            "2B": events.count("double"),
+            "3B": events.count("triple"),
+            "HR": hr,
+            "R": r,
+            "RBI": rbi,
+            "BB": bb,
+            "SO": so,
+            "SB": sb
+        })
+
+    df = pd.DataFrame(players)
+    return df
