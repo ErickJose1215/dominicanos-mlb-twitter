@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests matplotlib pandas tweepy python-dotenv
+          pip install pybaseball pandas matplotlib python-dotenv tweepy
 
       - name: Run bot with MLB API (print all players)
         run: |
