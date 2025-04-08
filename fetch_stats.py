@@ -43,7 +43,11 @@ def obtener_actuaciones():
         box = get_boxscore(game_id)
 
         for team in ['home', 'away']:
-            players = box[team]['players']
+    if team not in box:
+        continue
+    if 'players' not in box[team]:
+        continue
+    players = box[team]['players']
             for player_id, player_info in players.items():
                 stats = player_info.get('stats', {}).get('batting', {})
                 if not stats:
