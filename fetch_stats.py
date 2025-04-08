@@ -84,5 +84,7 @@ def get_performances():
                 })
 
     df = pd.DataFrame(players_data)
+        if not df.empty and "Grade" in df.columns:
     df = df.sort_values(by=["Grade", "H", "HR", "RBI"], ascending=[True, False, False, False])
     return df
+
