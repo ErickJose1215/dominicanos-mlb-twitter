@@ -1,6 +1,4 @@
-# .github/workflows/daily.yml
-
-name: Test Dominican MLB Bot Image Generation 🇩🇴
+name: Test Dominican MLB bot 🇩🇴
 
 on:
   workflow_dispatch:
@@ -10,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clone the repository
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -21,9 +19,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install git+https://github.com/toddrob99/MLB-StatsAPI.git
-          pip install matplotlib pandas tweepy python-dotenv
+          pip install requests matplotlib pandas tweepy python-dotenv
 
       - name: Generate image
         run: |
           python -c "import fetch_stats, create_image; df = fetch_stats.obtener_actuaciones(); img = create_image.generar_tabla(df); print('Image generated:', img)"
+
+      - name: Upload image as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dominicanos-mlb-image
+          path: tabla_dominicanos.png
