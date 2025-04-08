@@ -43,47 +43,10 @@ def obtener_actuaciones():
         box = get_boxscore(game_id)
 
         for team in ['home', 'away']:
-    if team not in box:
-        continue
-    if 'players' not in box[team]:
-        continue
-    players = box[team]['players']
-            for player_id, player_info in players.items():
-                stats = player_info.get('stats', {}).get('batting', {})
-                if not stats:
-                    continue
-                nombre = player_info['person']['fullName']
-                if nombre not in DOMINICAN_PLAYERS:
-                    continue
+            if team not in box:
+                continue
+            if 'players' not in box[team]:
+                continue
 
-                ab = stats.get('atBats', 0)
-                h = stats.get('hits', 0)
-                hr = stats.get('homeRuns', 0)
-                r = stats.get('runs', 0)
-                rbi = stats.get('rbi', 0)
-                bb = stats.get('baseOnBalls', 0)
-                so = stats.get('strikeOuts', 0)
-                sb = stats.get('stolenBases', 0)
-                doubles = stats.get('doubles', 0)
-                triples = stats.get('triples', 0)
-
-                clasificacion = clasificar_actuacion(h, hr, r, rbi, bb)
-
-                jugadores_data.append({
-                    "Jugador": nombre,
-                    "": clasificacion,
-                    "AB": ab,
-                    "H": h,
-                    "2B": doubles,
-                    "3B": triples,
-                    "HR": hr,
-                    "R": r,
-                    "RBI": rbi,
-                    "BB": bb,
-                    "SO": so,
-                    "SB": sb
-                })
-
-    df = pd.DataFrame(jugadores_data)
-    df = df.sort_values(by=["", "H", "HR", "RBI"], ascending=[True, False, False, False])
-    return df
+            players = box[team]['players']
+            for player
