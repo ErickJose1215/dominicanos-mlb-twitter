@@ -1,9 +1,8 @@
 import requests
 import pandas as pd
 from datetime import datetime, timedelta
-from classify import clasificar_actuacion
 
-# Static list of Dominican MLB players
+# Dominican players
 DOMINICAN_PLAYERS = [
     "Rafael Devers", "Carlos Santana", "José Ramírez", "Willy Adames",
     "Víctor Robles", "Julio Rodríguez", "Jorge Polanco", "Miguel Andújar",
@@ -41,9 +40,7 @@ def get_performances():
         box = get_boxscore(game_id)
 
         for team in ['home', 'away']:
-            if team not in box:
-                continue
-            if 'players' not in box[team]:
+            if team not in box or 'players' not in box[team]:
                 continue
 
             players = box[team]['players']
@@ -51,40 +48,23 @@ def get_performances():
                 stats = player_info.get('stats', {}).get('batting', {})
                 if not stats:
                     continue
+
                 name = player_info['person']['fullName']
                 if name not in DOMINICAN_PLAYERS:
                     continue
 
-                ab = stats.get('atBats', 0)
-                h = stats.get('hits', 0)
-                hr = stats.get('homeRuns', 0)
-                r = stats.get('runs', 0)
-                rbi = stats.get('rbi', 0)
-                bb = stats.get('baseOnBalls', 0)
-                so = stats.get('strikeOuts', 0)
-                sb = stats.get('stolenBases', 0)
-                doubles = stats.get('doubles', 0)
-                triples = stats.get('triples', 0)
-
-                grade = clasificar_actuacion(h, hr, r, rbi, bb)
-
                 players_data.append({
                     "Player": name,
-                    "Grade": grade,
-                    "AB": ab,
-                    "H": h,
-                    "2B": doubles,
-                    "3B": triples,
-                    "HR": hr,
-                    "R": r,
-                    "RBI": rbi,
-                    "BB": bb,
-                    "SO": so,
-                    "SB": sb
+                    "AB": stats.get('atBats', 0),
+                    "H": stats.get('hits', 0),
+                    "2B": stats.get('doubles', 0),
+                    "3B": stats.get('triples', 0),
+                    "HR": stats.get('homeRuns', 0),
+                    "R": stats.get('runs', 0),
+                    "RBI": stats.get('rbi', 0),
+                    "BB": stats.get('baseOnBalls', 0),
+                    "SO": stats.get('strikeOuts', 0),
+                    "SB": stats.get('stolenBases', 0)
                 })
 
-    df = pd.DataFrame(players_data)
-        if not df.empty and "Grade" in df.columns:
-    df = df.sort_values(by=["Grade", "H", "HR", "RBI"], ascending=[True, False, False, False])
-    return df
-
+    return pd.DataFrame(players_data)
