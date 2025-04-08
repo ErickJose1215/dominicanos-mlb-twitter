@@ -21,21 +21,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests matplotlib pandas tweepy python-dotenv
 
-      - name: Generate image (only if performances exist)
+      - name: Run bot with MLB API (no publish)
         run: |
           python -c "
 import fetch_stats, create_image;
 df = fetch_stats.get_performances();
 if df.empty:
-    print('No performances to report today.');
+    print('❌ No Dominican performances found for yesterday.');
 else:
     img = create_image.generate_table(df);
-    print('Image generated:', img)
+    print(f'✅ Image generated at: {img}')
 "
-
-      - name: Upload image as artifact (if it exists)
-        if: success() && exists('dominican_batters.png')
-        uses: actions/upload-artifact@v4
-        with:
-          name: dominicanos-mlb-image
-          path: dominican_batters.png
