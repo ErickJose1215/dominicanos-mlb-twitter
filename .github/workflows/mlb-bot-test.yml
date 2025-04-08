@@ -21,15 +21,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests matplotlib pandas tweepy python-dotenv
 
-      - name: Run bot with MLB API (no publish)
+      - name: Run bot with MLB API (print all players)
         run: |
           printf "%s\n" \
           "import fetch_stats, create_image" \
           "df = fetch_stats.get_performances()" \
+          "print(df)" \
           "if df.empty:" \
-          "    print('❌ No Dominican performances found for yesterday.')" \
+          "    print('❌ No performances found.')" \
           "else:" \
-          "    print('👀 Players found:', df['Player'].tolist())" \
           "    img = create_image.generate_table(df)" \
           "    print(f'✅ Image generated at: {img}')" > run_bot.py
           python run_bot.py
