@@ -2,19 +2,6 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta
 
-# Dominican players
-DOMINICAN_PLAYERS = [
-    "Rafael Devers", "Carlos Santana", "José Ramírez", "Willy Adames",
-    "Víctor Robles", "Julio Rodríguez", "Jorge Polanco", "Miguel Andújar",
-    "Christopher Morel", "Junior Caminero", "Leody Taveras", "Manny Machado",
-    "Fernando Tatis Jr.", "Santiago Espinal", "Elly De La Cruz", "Jeimer Candelario",
-    "Jeremy Peña", "Yainer Díaz", "Willi Castro", "Ramón Laureano", "Gary Sánchez",
-    "Jorge Mateo", "Vladimir Guerrero Jr.", "Juan Soto", "Mark Vientos",
-    "José Siri", "Starling Marte", "Jasson Domínguez", "Austin Wells",
-    "Enmanuel Valdez", "Oneil Cruz", "Teoscar Hernández", "Geraldo Perdomo",
-    "Luis Garcia Jr."
-]
-
 BASE_URL = "https://statsapi.mlb.com/api/v1"
 
 def get_yesterdays_games():
@@ -50,9 +37,7 @@ def get_performances():
                     continue
 
                 name = player_info['person']['fullName']
-                print(f"Found: {name}")
-                if name not in DOMINICAN_PLAYERS:
-                    continue
+                print(f"🧾 Found player: {name}")  # Mostrar todos los nombres
 
                 players_data.append({
                     "Player": name,
