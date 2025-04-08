@@ -17,26 +17,19 @@ def get_performances():
         print("⚠️ Statcast no devolvió datos.")
         return pd.DataFrame()
 
-    # ✅ Filtrar eventos de bateo
+    # ✅ Tomar solo eventos donde haya un bateador identificado
     batting_data = data[
         data['batter'].notnull() &
         data['player_name'].notnull() &
         data['description'].notnull()
     ]
 
-    # ❌ Obtener nombres que también lanzaron
-    pitcher_names = set(data['player_name'][data['pitcher'].notnull()])
+    print(f"✅ {len(batting_data)} eventos de bateo brutos encontrados.")
 
-    # 🧹 Eliminar los que aparecen como pitcher
-    batting_data = batting_data[~batting_data['player_name'].isin(pitcher_names)]
-
-    print(f"✅ {len(batting_data)} eventos de bateo limpios encontrados.")
-
-    # Agrupar por jugador
     resumen = (
-        batting_data.groupby("player_name")
+        batting_data.groupby("batter")
         .agg({
-            "description": "count",
+            "player_name": "first",
             "events": lambda x: list(x)
         })
         .reset_index()
@@ -52,6 +45,10 @@ def get_performances():
         hr = events.count("home_run")
         bb = events.count("walk") + events.count("intent_walk") + events.count("hit_by_pitch")
         so = events.count("strikeout")
+
+        # Solo incluir jugadores que hayan hecho algo real
+        if ab < 1 and h == 0 and hr == 0 and bb == 0:
+            continue
 
         jugadores.append({
             "Player": name,
@@ -70,8 +67,8 @@ def get_performances():
     df = pd.DataFrame(jugadores)
 
     if df.empty:
-        print("⚠️ No se encontraron bateadores reales.")
+        print("⚠️ No se encontraron bateadores con producción real.")
         return df
 
-    print(f"✅ {len(df)} jugadores ofensivos reales listos.")
+    print(f"✅ {len(df)} bateadores activos con stats ofensivos.")
     return df.sort_values(by=["H", "HR", "BB"], ascending=False).reset_index(drop=True)
