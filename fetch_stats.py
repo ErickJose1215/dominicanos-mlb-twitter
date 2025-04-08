@@ -1,6 +1,6 @@
 # fetch_stats.py
 
-from mlbstatsapi import Mlb
+from mlb_statsapi import Mlb
 from datetime import datetime, timedelta
 import pandas as pd
 from classify import clasificar_actuacion
