@@ -1,4 +1,4 @@
-git+https://github.com/toddrob99/MLB-StatsAPI.git
+git+https://github.com/toddrob99/MLB-StatsAPI.git#egg=mlbstatsapi
 matplotlib
 pandas
 tweepy
