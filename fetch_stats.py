@@ -1,11 +1,9 @@
-# fetch_stats.py (rewritten using MLB Stats API via requests)
-
 import requests
 import pandas as pd
 from datetime import datetime, timedelta
 from classify import clasificar_actuacion
 
-# Static list of Dominican MLB players (temporary)
+# Static list of Dominican MLB players
 DOMINICAN_PLAYERS = [
     "Rafael Devers", "Carlos Santana", "José Ramírez", "Willy Adames",
     "Víctor Robles", "Julio Rodríguez", "Jorge Polanco", "Miguel Andújar",
@@ -35,9 +33,9 @@ def get_boxscore(game_id):
     res.raise_for_status()
     return res.json()
 
-def obtener_actuaciones():
+def get_performances():
     games = get_yesterdays_games()
-    jugadores_data = []
+    players_data = []
 
     for game_id in games:
         box = get_boxscore(game_id)
@@ -53,8 +51,8 @@ def obtener_actuaciones():
                 stats = player_info.get('stats', {}).get('batting', {})
                 if not stats:
                     continue
-                nombre = player_info['person']['fullName']
-                if nombre not in DOMINICAN_PLAYERS:
+                name = player_info['person']['fullName']
+                if name not in DOMINICAN_PLAYERS:
                     continue
 
                 ab = stats.get('atBats', 0)
@@ -68,11 +66,11 @@ def obtener_actuaciones():
                 doubles = stats.get('doubles', 0)
                 triples = stats.get('triples', 0)
 
-                clasificacion = clasificar_actuacion(h, hr, r, rbi, bb)
+                grade = clasificar_actuacion(h, hr, r, rbi, bb)
 
-                jugadores_data.append({
-                    "Jugador": nombre,
-                    "Clasificación": clasificacion,
+                players_data.append({
+                    "Player": name,
+                    "Grade": grade,
                     "AB": ab,
                     "H": h,
                     "2B": doubles,
@@ -85,6 +83,6 @@ def obtener_actuaciones():
                     "SB": sb
                 })
 
-    df = pd.DataFrame(jugadores_data)
-    df = df.sort_values(by=["Clasificación", "H", "HR", "RBI"], ascending=[True, False, False, False])
+    df = pd.DataFrame(players_data)
+    df = df.sort_values(by=["Grade", "H", "HR", "RBI"], ascending=[True, False, False, False])
     return df
