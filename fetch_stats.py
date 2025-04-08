@@ -1,11 +1,12 @@
-# fetch_stats.py
+# fetch_stats.py (rewritten using MLB Stats API via requests)
 
-from mlbstatsapi import Mlb
-from datetime import datetime, timedelta
+import requests
 import pandas as pd
+from datetime import datetime, timedelta
 from classify import clasificar_actuacion
 
-DOMINICANOS = [
+# Static list of Dominican MLB players (temporary)
+DOMINICAN_PLAYERS = [
     "Rafael Devers", "Carlos Santana", "José Ramírez", "Willy Adames",
     "Víctor Robles", "Julio Rodríguez", "Jorge Polanco", "Miguel Andújar",
     "Christopher Morel", "Junior Caminero", "Leody Taveras", "Manny Machado",
@@ -17,49 +18,67 @@ DOMINICANOS = [
     "Luis Garcia Jr."
 ]
 
+BASE_URL = "https://statsapi.mlb.com/api/v1"
+
+def get_yesterdays_games():
+    yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+    url = f"{BASE_URL}/schedule/games/?sportId=1&startDate={yesterday}&endDate={yesterday}"
+    res = requests.get(url)
+    res.raise_for_status()
+    data = res.json()
+    game_ids = [game['gamePk'] for date in data['dates'] for game in date['games']]
+    return game_ids
+
+def get_boxscore(game_id):
+    url = f"{BASE_URL}/game/{game_id}/boxscore"
+    res = requests.get(url)
+    res.raise_for_status()
+    return res.json()
+
 def obtener_actuaciones():
-    mlb = Mlb()
-    ayer = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-    games = mlb.get_schedule(start_date=ayer, end_date=ayer)['dates']
+    games = get_yesterdays_games()
     jugadores_data = []
 
-    for game in games:
-        for g in game['games']:
-            box = mlb.get_boxscore(game_id=g['gamePk'])
-            for team_side in ['home', 'away']:
-                for p in box[team_side]['players']:
-                    jugador = box[team_side]['players'][p]
-                    nombre = jugador['person']['fullName']
-                    stats = jugador.get('stats', {}).get('batting', {})
+    for game_id in games:
+        box = get_boxscore(game_id)
 
-                    if nombre in DOMINICANOS and stats:
-                        ab = stats.get('atBats', 0)
-                        h = stats.get('hits', 0)
-                        hr = stats.get('homeRuns', 0)
-                        r = stats.get('runs', 0)
-                        rbi = stats.get('rbi', 0)
-                        bb = stats.get('baseOnBalls', 0)
-                        so = stats.get('strikeOuts', 0)
-                        sb = stats.get('stolenBases', 0)
-                        doubles = stats.get('doubles', 0)
-                        triples = stats.get('triples', 0)
+        for team in ['home', 'away']:
+            players = box[team]['players']
+            for player_id, player_info in players.items():
+                stats = player_info.get('stats', {}).get('batting', {})
+                if not stats:
+                    continue
+                nombre = player_info['person']['fullName']
+                if nombre not in DOMINICAN_PLAYERS:
+                    continue
 
-                        clasificacion = clasificar_actuacion(h, hr, r, rbi, bb)
+                ab = stats.get('atBats', 0)
+                h = stats.get('hits', 0)
+                hr = stats.get('homeRuns', 0)
+                r = stats.get('runs', 0)
+                rbi = stats.get('rbi', 0)
+                bb = stats.get('baseOnBalls', 0)
+                so = stats.get('strikeOuts', 0)
+                sb = stats.get('stolenBases', 0)
+                doubles = stats.get('doubles', 0)
+                triples = stats.get('triples', 0)
 
-                        jugadores_data.append({
-                            "Jugador": nombre,
-                            "": clasificacion,
-                            "AB": ab,
-                            "H": h,
-                            "2B": doubles,
-                            "3B": triples,
-                            "HR": hr,
-                            "R": r,
-                            "RBI": rbi,
-                            "BB": bb,
-                            "SO": so,
-                            "SB": sb
-                        })
+                clasificacion = clasificar_actuacion(h, hr, r, rbi, bb)
+
+                jugadores_data.append({
+                    "Jugador": nombre,
+                    "": clasificacion,
+                    "AB": ab,
+                    "H": h,
+                    "2B": doubles,
+                    "3B": triples,
+                    "HR": hr,
+                    "R": r,
+                    "RBI": rbi,
+                    "BB": bb,
+                    "SO": so,
+                    "SB": sb
+                })
 
     df = pd.DataFrame(jugadores_data)
     df = df.sort_values(by=["", "H", "HR", "RBI"], ascending=[True, False, False, False])
