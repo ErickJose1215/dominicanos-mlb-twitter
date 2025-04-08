@@ -50,6 +50,7 @@ def get_performances():
                     continue
 
                 name = player_info['person']['fullName']
+                print(f"Found: {name}")
                 if name not in DOMINICAN_PLAYERS:
                     continue
 
