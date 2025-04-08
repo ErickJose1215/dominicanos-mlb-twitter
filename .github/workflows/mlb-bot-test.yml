@@ -1,5 +1,3 @@
-# Updated to trigger GitHub Actions
-
 name: Test Dominican MLB bot 🇩🇴
 
 on:
