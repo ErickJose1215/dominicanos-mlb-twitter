@@ -29,6 +29,7 @@ jobs:
           "if df.empty:" \
           "    print('❌ No Dominican performances found for yesterday.')" \
           "else:" \
+          "    print('👀 Players found:', df['Player'].tolist())" \
           "    img = create_image.generate_table(df)" \
           "    print(f'✅ Image generated at: {img}')" > run_bot.py
           python run_bot.py
