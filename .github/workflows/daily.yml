@@ -23,10 +23,10 @@ jobs:
 
       - name: Generate image
         run: |
-          python -c "import fetch_stats, create_image; df = fetch_stats.obtener_actuaciones(); img = create_image.generar_tabla(df); print('Image generated:', img)"
+          python -c "import fetch_stats, create_image; df = fetch_stats.obtener_actuaciones(); img = create_image.generate_table(df); print('Image generated:', img)"
 
       - name: Upload image as artifact
         uses: actions/upload-artifact@v4
         with:
           name: dominicanos-mlb-image
-          path: tabla_dominicanos.png
+          path: dominican_batters.png
