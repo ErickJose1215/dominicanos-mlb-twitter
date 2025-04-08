@@ -2,6 +2,7 @@ name: Test Dominican MLB bot 🇩🇴
 
 on:
   workflow_dispatch:
+
 jobs:
   test-image:
     runs-on: ubuntu-latest
