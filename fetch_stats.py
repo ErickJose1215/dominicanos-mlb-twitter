@@ -1,70 +1,30 @@
-from pybaseball import statcast
+from pybaseball import batting_stats_range
 import pandas as pd
 from datetime import datetime, timedelta
 
-# Lista fija de jugadores dominicanos (puedes extenderla)
-DOMINICAN_PLAYERS = [
-    "Rafael Devers", "Carlos Santana", "José Ramírez", "Willy Adames",
-    "Víctor Robles", "Julio Rodríguez", "Jorge Polanco", "Miguel Andújar",
-    "Christopher Morel", "Junior Caminero", "Leody Taveras", "Manny Machado",
-    "Fernando Tatis Jr.", "Santiago Espinal", "Elly De La Cruz", "Jeimer Candelario",
-    "Jeremy Peña", "Yainer Díaz", "Willi Castro", "Ramón Laureano", "Gary Sánchez",
-    "Jorge Mateo", "Vladimir Guerrero Jr.", "Juan Soto", "Mark Vientos",
-    "José Siri", "Starling Marte", "Jasson Domínguez", "Austin Wells",
-    "Enmanuel Valdez", "Oneil Cruz", "Teoscar Hernández", "Geraldo Perdomo",
-    "Luis Garcia Jr."
-]
-
 def get_performances():
+    # Obtener la fecha de ayer en formato YYYY-MM-DD
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-    data = statcast(start_dt=yesterday, end_dt=yesterday)
 
-    if data.empty:
+    print(f"📅 Obteniendo estadísticas ofensivas del {yesterday}")
+
+    # Consultar todas las actuaciones de bateadores en ese día
+    try:
+        df = batting_stats_range(yesterday, yesterday)
+    except Exception as e:
+        print(f"❌ Error consultando pybaseball: {e}")
         return pd.DataFrame()
 
-    # Filtrar solo apariciones de bateo
-    batting_data = data[data['description'].notnull()]
-    
-    # Agrupar por jugador
-    summary = (
-        batting_data.groupby("player_name")
-        .agg({
-            "events": lambda x: list(x),
-            "description": "count"
-        })
-        .reset_index()
-    )
+    # Seleccionar columnas clave
+    columnas = ["Name", "AB", "H", "2B", "3B", "HR", "R", "RBI", "BB", "SO", "SB"]
+    df_filtrado = df[columnas].copy()
 
-    players = []
+    # Eliminar jugadores sin turnos al bate
+    df_filtrado = df_filtrado[df_filtrado["AB"] > 0]
 
-    for _, row in summary.iterrows():
-        name = row["player_name"]
-        if name not in DOMINICAN_PLAYERS:
-            continue
+    if df_filtrado.empty:
+        print("⚠️ No se encontraron actuaciones ofensivas con AB > 0.")
+    else:
+        print(f"✅ {len(df_filtrado)} bateadores con estadísticas encontradas.")
 
-        events = row["events"]
-        ab = len(events)
-        h = sum(1 for e in events if e in ["single", "double", "triple", "home_run"])
-        hr = events.count("home_run")
-        bb = events.count("walk") + events.count("intent_walk") + events.count("hit_by_pitch")
-        so = events.count("strikeout")
-        rbi = 0  # No incluido directamente en Statcast
-        sb = 0   # Tampoco directamente, puedes integrar otra fuente si quieres
-        r = 0    # No disponible en este nivel
-
-        players.append({
-            "Player": name,
-            "AB": ab,
-            "H": h,
-            "2B": events.count("double"),
-            "3B": events.count("triple"),
-            "HR": hr,
-            "R": r,
-            "RBI": rbi,
-            "BB": bb,
-            "SO": so,
-            "SB": sb
-        })
-
-    df = pd.DataFrame(players)
-    return df
+    return df_filtrado.reset_index(drop=True)
