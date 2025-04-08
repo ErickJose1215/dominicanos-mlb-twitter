@@ -72,7 +72,7 @@ def obtener_actuaciones():
 
                 jugadores_data.append({
                     "Jugador": nombre,
-                    "": clasificacion,
+                    "Clasificación": clasificacion,
                     "AB": ab,
                     "H": h,
                     "2B": doubles,
@@ -86,5 +86,5 @@ def obtener_actuaciones():
                 })
 
     df = pd.DataFrame(jugadores_data)
-    df = df.sort_values(by=["", "H", "HR", "RBI"], ascending=[True, False, False, False])
+    df = df.sort_values(by=["Clasificación", "H", "HR", "RBI"], ascending=[True, False, False, False])
     return df
