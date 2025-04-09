@@ -1,63 +1,37 @@
-from pybaseball import statcast_batter, playerid_lookup
+from pybaseball import batting_stats_range
 import pandas as pd
 
-# Buscar ID de Juan Soto
-soto_info = playerid_lookup("soto", "juan")
-soto_id = soto_info.loc[0, "key_mlbam"]
-print(f"📌 ID de Juan Soto: {soto_id}")
+# Nombre del jugador
+nombre = "Juan Soto"
+fecha_inicio = "2025-04-01"
+fecha_fin = "2025-04-08"
 
-# Descargar datos del 1 al 8 de abril
-df = statcast_batter("2025-04-01", "2025-04-08", soto_id)
+# Descargar estadísticas de bateo de Baseball Reference
+print(f"📅 Extrayendo datos de Baseball Reference para {nombre} entre {fecha_inicio} y {fecha_fin}...")
+df = batting_stats_range(fecha_inicio, fecha_fin)
 
-if df.empty:
-    print("❌ Juan Soto no tuvo actividad ofensiva en ese rango.")
+# Filtrar por el nombre del jugador exacto
+df_jugador = df[df['Name'] == nombre]
+
+if df_jugador.empty:
+    print(f"❌ No se encontraron estadísticas para {nombre}.")
 else:
-    # Asegurar columnas para evitar errores
-    if 'rbi' not in df.columns:
-        df['rbi'] = 0
-    if 'scoring_play' not in df.columns:
-        df['scoring_play'] = False
+    df_jugador = df_jugador.sort_values(by="Date")
 
-    # Filtrar eventos válidos
-    eventos_df = df[df['events'].notna()][
-        ['game_date', 'events', 'rbi', 'scoring_play']
-    ]
+    # Mostrar estadísticas por día
+    for _, row in df_jugador.iterrows():
+        fecha = row["Date"]
+        ab = int(row["AB"])
+        h = int(row["H"])
+        double = int(row["2B"])
+        triple = int(row["3B"])
+        hr = int(row["HR"])
+        r = int(row["R"])
+        rbi = int(row["RBI"])
+        bb = int(row["BB"])
+        so = int(row["SO"])
+        sb = int(row["SB"])
+        hbp = int(row.get("HBP", 0))  # A veces HBP no está
 
-    # Agrupar por fecha
-    grouped = (
-        eventos_df
-        .groupby('game_date')
-        .agg({
-            'events': list,
-            'rbi': 'sum',
-            'scoring_play': lambda x: x.sum()
-        })
-        .reset_index()
-        .sort_values(by='game_date')
-    )
-
-    # Procesar y mostrar
-    for _, row in grouped.iterrows():
-        fecha = row['game_date']
-        eventos = row['events']
-        rbi = int(row['rbi'])
-        runs = int(row['scoring_play'])
-
-        hits = ['single', 'double', 'triple', 'home_run']
-        outs = ['field_out', 'force_out', 'grounded_into_double_play', 'other_out', 'strikeout']
-        walks = ['walk', 'intent_walk']
-        hbp = ['hit_by_pitch']
-        steals = ['stolen_base']
-
-        ab = sum(1 for e in eventos if e in hits + outs)
-        h = sum(1 for e in eventos if e in hits)
-        double = eventos.count('double')
-        triple = eventos.count('triple')
-        hr = eventos.count('home_run')
-        bb = sum(1 for e in eventos if e in walks)
-        hbp_count = eventos.count('hit_by_pitch')
-        so = eventos.count('strikeout')
-        sb = eventos.count('stolen_base')
-
-        print(f"\n🧾 Estadísticas ofensivas de Juan Soto ({fecha}):")
-        print(f"AB: {ab}, H: {h}, 2B: {double}, 3B: {triple}, HR: {hr}, R: {runs}, RBI: {rbi}, BB: {bb}, HBP: {hbp_count}, SO: {so}, SB: {sb}")
+        print(f"\n🧾 Estadísticas ofensivas de {nombre} ({fecha}):")
+        print(f"AB: {ab}, H: {h}, 2B: {double}, 3B: {triple}, HR: {hr}, R: {r}, RBI: {rbi}, BB: {bb}, HBP: {hbp}, SO: {so}, SB: {sb}")
