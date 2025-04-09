@@ -1,27 +1,29 @@
-
 from pybaseball import batting_stats_range
 import pandas as pd
 
-# Nombre del jugador
-nombre = "Juan Soto"
-fecha_inicio = "2025-04-01"
-fecha_fin = "2025-04-08"
+# Player info and date range
+player_name = "Juan Soto"
+start_date = "2025-04-01"
+end_date = "2025-04-08"
 
-# Descargar estadísticas de bateo de Baseball Reference
-print(f"📅 Extrayendo datos de Baseball Reference para {nombre} entre {fecha_inicio} y {fecha_fin}...")
-df = batting_stats_range(fecha_inicio, fecha_fin)
+print(f"📅 Fetching stats for {player_name} from {start_date} to {end_date}...")
 
-# Filtrar por el nombre del jugador exacto
-df_jugador = df[df['Name'] == nombre]
+try:
+    df = batting_stats_range(start_date, end_date)
+except Exception as e:
+    print(f"❌ Error fetching data: {e}")
+    exit(1)
 
-if df_jugador.empty:
-    print(f"❌ No se encontraron estadísticas para {nombre}.")
+# Filter player by exact name
+player_df = df[df['Name'] == player_name]
+
+if player_df.empty:
+    print(f"⚠️ No stats found for {player_name} in that range.")
 else:
-    df_jugador = df_jugador.sort_values(by="Date")
+    player_df = player_df.sort_values(by="Date")
 
-    # Mostrar estadísticas por día
-    for _, row in df_jugador.iterrows():
-        fecha = row["Date"]
+    for _, row in player_df.iterrows():
+        date = row["Date"]
         ab = int(row["AB"])
         h = int(row["H"])
         double = int(row["2B"])
@@ -32,7 +34,7 @@ else:
         bb = int(row["BB"])
         so = int(row["SO"])
         sb = int(row["SB"])
-        hbp = int(row.get("HBP", 0))  # A veces HBP no está
+        hbp = int(row.get("HBP", 0))  # fallback if HBP column missing
 
-        print(f"\n🧾 Estadísticas ofensivas de {nombre} ({fecha}):")
+        print(f"\n🧾 Offensive stats for {player_name} on {date}:")
         print(f"AB: {ab}, H: {h}, 2B: {double}, 3B: {triple}, HR: {hr}, R: {r}, RBI: {rbi}, BB: {bb}, HBP: {hbp}, SO: {so}, SB: {sb}")
