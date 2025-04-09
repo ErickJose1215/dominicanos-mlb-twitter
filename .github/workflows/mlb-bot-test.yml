@@ -1,4 +1,4 @@
-name: Test Dominican MLB Bot
+name: "Test Dominican MLB Bot"
 
 on:
   workflow_dispatch:
@@ -23,14 +23,14 @@ jobs:
 
       - name: Run bot (fetch + image)
         run: |
-          echo "import fetch_stats, create_image
-df = fetch_stats.get_performances()
-if df.empty:
-    print('❌ No performances to show.')
-else:
-    img = create_image.generate_table(df)
-    print(f'✅ Image saved at: {img}')
-" > run_bot.py
+          printf "%s\n" \
+          "import fetch_stats, create_image" \
+          "df = fetch_stats.get_performances()" \
+          "if df.empty:" \
+          "    print('❌ No performances to show.')" \
+          "else:" \
+          "    img = create_image.generate_table(df)" \
+          "    print(f'✅ Image saved at: {img}')" > run_bot.py
           python run_bot.py
 
       - name: Upload image as artifact
