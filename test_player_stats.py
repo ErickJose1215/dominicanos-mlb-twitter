@@ -6,13 +6,19 @@ soto_info = playerid_lookup("soto", "juan")
 soto_id = soto_info.loc[0, "key_mlbam"]
 print(f"📌 ID de Juan Soto: {soto_id}")
 
-# Descargar data (puedes ampliar el rango si quieres)
-df = statcast_batter("2025-04-07", "2025-04-07", soto_id)
+# Descargar datos del 1 al 8 de abril
+df = statcast_batter("2025-04-01", "2025-04-08", soto_id)
 
 if df.empty:
     print("❌ Juan Soto no tuvo actividad ofensiva en ese rango.")
 else:
-    # Filtrar eventos no nulos con fecha y columnas necesarias
+    # Asegurar columnas para evitar errores
+    if 'rbi' not in df.columns:
+        df['rbi'] = 0
+    if 'scoring_play' not in df.columns:
+        df['scoring_play'] = False
+
+    # Filtrar eventos válidos
     eventos_df = df[df['events'].notna()][
         ['game_date', 'events', 'rbi', 'scoring_play']
     ]
@@ -24,20 +30,19 @@ else:
         .agg({
             'events': list,
             'rbi': 'sum',
-            'scoring_play': lambda x: x.sum()  # Cuenta R (carreras anotadas)
+            'scoring_play': lambda x: x.sum()
         })
         .reset_index()
         .sort_values(by='game_date')
     )
 
-    # Procesar cada juego
+    # Procesar y mostrar
     for _, row in grouped.iterrows():
         fecha = row['game_date']
         eventos = row['events']
-        rbi = int(row['rbi'])  # Asegurar entero
+        rbi = int(row['rbi'])
         runs = int(row['scoring_play'])
 
-        # Categorías
         hits = ['single', 'double', 'triple', 'home_run']
         outs = ['field_out', 'force_out', 'grounded_into_double_play', 'other_out', 'strikeout']
         walks = ['walk', 'intent_walk']
