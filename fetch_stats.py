@@ -1,74 +1,106 @@
-from pybaseball import statcast
+# fetch_stats.py
+
+from pybaseball import statcast_batter, playerid_lookup
 import pandas as pd
 from datetime import datetime, timedelta
+import time
+
+# Lista de jugadores dominicanos (nombre completo)
+DOMINICAN_PLAYERS = [
+    "Juan Soto", "Rafael Devers", "Julio Rodríguez", "Fernando Tatis", "Teoscar Hernández"
+]
+
+START_DATE = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+END_DATE = START_DATE  # Solo el día anterior
 
 def get_performances():
-    # Fecha de ayer
-    date = "2025-04-07"
-    print(f"📅 Extrayendo datos Statcast para el {date}")
+    rows = []
 
-    try:
-        data = statcast(start_dt=date, end_dt=date)
-    except Exception as e:
-        print(f"❌ Error al consultar Statcast: {e}")
-        return pd.DataFrame()
+    for full_name in DOMINICAN_PLAYERS:
+        try:
+            first, last = full_name.split(" ", 1)
+            info = playerid_lookup(last, first)
 
-    if data.empty:
-        print("⚠️ Statcast no devolvió datos.")
-        return pd.DataFrame()
+            if info.empty:
+                print(f"❌ Player not found: {full_name}")
+                continue
 
-    # ✅ Tomar solo eventos donde haya un bateador identificado
-    batting_data = data[
-        data['batter'].notnull() &
-        data['player_name'].notnull() &
-        data['description'].notnull()
-    ]
+            player_id = info.loc[0, "key_mlbam"]
+            df = statcast_batter(START_DATE, END_DATE, player_id)
 
-    print(f"✅ {len(batting_data)} eventos de bateo brutos encontrados.")
+            if df.empty:
+                continue
 
-    resumen = (
-        batting_data.groupby("batter")
-        .agg({
-            "player_name": "first",
-            "events": lambda x: list(x)
-        })
-        .reset_index()
-    )
+            if 'rbi' not in df.columns:
+                df['rbi'] = 0
+            if 'scoring_play' not in df.columns:
+                df['scoring_play'] = False
 
-    jugadores = []
-    for _, row in resumen.iterrows():
-        name = row["player_name"]
-        events = row["events"]
+            events_df = df[df['events'].notna()][
+                ['game_date', 'events', 'rbi', 'scoring_play']
+            ]
 
-        ab = len(events)
-        h = sum(1 for e in events if e in ["single", "double", "triple", "home_run"])
-        hr = events.count("home_run")
-        bb = events.count("walk") + events.count("intent_walk") + events.count("hit_by_pitch")
-        so = events.count("strikeout")
+            grouped = (
+                events_df
+                .groupby('game_date')
+                .agg({
+                    'events': list,
+                    'rbi': 'sum',
+                    'scoring_play': lambda x: x.sum()
+                })
+                .reset_index()
+                .sort_values(by='game_date')
+            )
 
-        # Solo incluir jugadores que hayan hecho algo real
-        if ab < 1 and h == 0 and hr == 0 and bb == 0:
+            for _, row in grouped.iterrows():
+                date = row['game_date']
+                events = row['events']
+                rbi = int(row['rbi'])
+                runs = int(row['scoring_play'])
+
+                hits = ['single', 'double', 'triple', 'home_run']
+                outs = ['field_out', 'force_out', 'grounded_into_double_play', 'other_out', 'strikeout']
+                walks = ['walk', 'intent_walk']
+                hbp = ['hit_by_pitch']
+                steals = ['stolen_base']
+
+                ab = sum(1 for e in events if e in hits + outs)
+                h = sum(1 for e in events if e in hits)
+                double = events.count('double')
+                triple = events.count('triple')
+                hr = events.count('home_run')
+                bb = sum(1 for e in events if e in walks)
+                hbp_count = events.count('hit_by_pitch')
+                so = events.count('strikeout')
+                sb = events.count('stolen_base')
+
+                rows.append({
+                    "Player": full_name,
+                    "Date": date,
+                    "AB": ab,
+                    "H": h,
+                    "2B": double,
+                    "3B": triple,
+                    "HR": hr,
+                    "R": runs,
+                    "RBI": rbi,
+                    "BB": bb,
+                    "HBP": hbp_count,
+                    "SO": so,
+                    "SB": sb
+                })
+
+            time.sleep(1)
+
+        except Exception as e:
+            print(f"❌ Error processing {full_name}: {e}")
             continue
 
-        jugadores.append({
-            "Player": name,
-            "AB": ab,
-            "H": h,
-            "2B": events.count("double"),
-            "3B": events.count("triple"),
-            "HR": hr,
-            "R": 0,      # No disponible en Statcast
-            "RBI": 0,    # No disponible en Statcast
-            "BB": bb,
-            "SO": so,
-            "SB": 0      # No disponible en Statcast
-        })
+    df_final = pd.DataFrame(rows)
 
-    df = pd.DataFrame(jugadores)
+    if df_final.empty:
+        print("❌ No offensive stats found for any player.")
+    else:
+        df_final = df_final.sort_values(by=["H", "HR", "RBI"], ascending=False).reset_index(drop=True)
 
-    if df.empty:
-        print("⚠️ No se encontraron bateadores con producción real.")
-        return df
-
-    print(f"✅ {len(df)} bateadores activos con stats ofensivos.")
-    return df.sort_values(by=["H", "HR", "BB"], ascending=False).reset_index(drop=True)
+    return df_final
