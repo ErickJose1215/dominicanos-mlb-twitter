@@ -18,8 +18,7 @@ else:
     # Paso 3: Seleccionar columnas clave para análisis
     columnas = [
         'game_date', 'at_bat_number',
-        'player_name', 'description', 'events',
-        'balls', 'strikes', 'bat_score', 'hit_location'
+        'player_name', 'description', 'events', 'bat_score'
     ]
 
     df_filtrado = df[columnas].sort_values(by=['at_bat_number', 'game_date'])
