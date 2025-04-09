@@ -20,7 +20,7 @@ else:
         'at_bat_number','player_name', 'description', 'events', 'bat_score'
     ]
 
-    df_filtrado = df[columnas].sort_values(by=['at_bat_number', 'game_date'])
+    df_filtrado = df[columnas].sort_values(by=['at_bat_number'])
 
     # Paso 4: Mostrar resultados
     pd.set_option("display.max_rows", None)  # Muestra todo sin cortar
