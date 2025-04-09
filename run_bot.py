@@ -1,16 +1,9 @@
-import fetch_stats
+import fetch_stats, create_image
 
-# Obtener los datos ofensivos
 df = fetch_stats.get_performances()
-
-# Mostrar el resultado
-print("🧾 Jugadores encontrados con stats ofensivos:")
-print(df)
-
-# Mensaje adicional si no hay data
 if df.empty:
-    print("❌ No se encontraron actuaciones ofensivas reales.")
+    print("❌ No performances to show.")
 else:
-    print(f"✅ Total de jugadores listados: {len(df)}")
+    create_image.generate_table(df)
 
 
