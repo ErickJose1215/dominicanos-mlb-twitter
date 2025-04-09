@@ -7,7 +7,7 @@ import time
 
 # Lista de jugadores dominicanos (nombre completo)
 DOMINICAN_PLAYERS = [
-    "Juan Soto", "Rafael Devers", "Julio Rodríguez", "Fernando Tatis", "Teoscar Hernández"
+    "Juan Soto", "Rafael Devers", "Julio Rodríguez", "Fernando Tatis Jr.", "Teoscar Hernández"
 ]
 
 START_DATE = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
