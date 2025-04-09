@@ -1,13 +1,12 @@
 from pybaseball import statcast_batter, playerid_lookup
 import pandas as pd
 
-# Paso 1: Buscar el ID de Juan Soto
+# Buscar el ID de Juan Soto
 soto_info = playerid_lookup("soto", "juan")
 soto_id = soto_info.loc[0, "key_mlbam"]
-
 print(f"📌 ID de Juan Soto: {soto_id}")
 
-# Paso 2: Descargar data de Statcast para ese día
+# Descargar data de Statcast para ese día
 df = statcast_batter("2025-04-07", "2025-04-07", soto_id)
 
 if df.empty:
@@ -15,14 +14,10 @@ if df.empty:
 else:
     print(f"✅ {len(df)} lanzamientos registrados para Juan Soto.")
 
-    # Paso 3: Seleccionar columnas clave para análisis
-    columnas = [
-        'at_bat_number','player_name', 'description', 'events', 'bat_score'
-    ]
+    # Filtrar solo eventos con valor (no NaN)
+    eventos_realizados = df[df['events'].notna()][['player_name', 'events']]
 
-    df_filtrado = df[columnas].sort_values(by=['at_bat_number'])
-
-    # Paso 4: Mostrar resultados
-    pd.set_option("display.max_rows", None)  # Muestra todo sin cortar
-    print("\n🧾 Detalles de cada pitcheo:")
-    print(df_filtrado)
+    # Mostrar resultados
+    pd.set_option("display.max_rows", None)
+    print("\n🧾 Eventos ofensivos reales:")
+    print(eventos_realizados)
