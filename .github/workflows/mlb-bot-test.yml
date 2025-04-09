@@ -1,4 +1,4 @@
-name: 🇩🇴 Test Dominican MLB Bot
+name: Test Dominican MLB Bot
 
 on:
   workflow_dispatch:
