@@ -1,4 +1,4 @@
-name: Test Dominican MLB bot 🇩🇴
+name: 🇩🇴 Test Dominican MLB Bot
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -19,19 +19,18 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pybaseball pandas matplotlib python-dotenv tweepy
+          pip install pybaseball pandas matplotlib
 
-      - name: Run bot with MLB API (print all players)
+      - name: Run bot (fetch + image)
         run: |
-          printf "%s\n" \
-          "import fetch_stats, create_image" \
-          "df = fetch_stats.get_performances()" \
-          "print(df)" \
-          "if df.empty:" \
-          "    print('❌ No performances found.')" \
-          "else:" \
-          "    img = create_image.generate_table(df)" \
-          "    print(f'✅ Image generated at: {img}')" > run_bot.py
+          echo "import fetch_stats, create_image
+df = fetch_stats.get_performances()
+if df.empty:
+    print('❌ No performances to show.')
+else:
+    img = create_image.generate_table(df)
+    print(f'✅ Image saved at: {img}')
+" > run_bot.py
           python run_bot.py
 
       - name: Upload image as artifact
