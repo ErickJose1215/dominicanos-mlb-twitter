@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 def get_performances():
     # Fecha de ayer
-    date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    date = "2025-04-07"
     print(f"📅 Extrayendo datos Statcast para el {date}")
 
     try:
