@@ -17,8 +17,8 @@ else:
 
     # Paso 3: Seleccionar columnas clave para análisis
     columnas = [
-        'game_date', 'at_bat_number', 'pitch_type', 'release_speed',
-        'player_name', 'description', 'events', 'bb_type',
+        'game_date', 'at_bat_number',
+        'player_name', 'description', 'events',
         'balls', 'strikes', 'bat_score', 'hit_location'
     ]
 
